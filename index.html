@@ -493,25 +493,19 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // ==========================================
-        // আপনার Firebase কনফিগারেশন এখানে বসান
-        // ==========================================
+        // আপনার ফায়ারবেস কনফিগারেশন সফলভাবে যুক্ত করা হলো
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyD7f_vtzqMp2jlcWrmpYvoA4stYW3FIHGw",
+            authDomain: "bhatgram-election.firebaseapp.com",
+            databaseURL: "https://bhatgram-election-default-rtdb.firebaseio.com",
+            projectId: "bhatgram-election",
+            storageBucket: "bhatgram-election.appspot.com",
+            messagingSenderId: "283226652394",
+            appId: "1:283226652394:web:ad504439fc465d3c9f2193"
         };
 
-        let db = null;
-        let useFirebase = firebaseConfig.apiKey !== "YOUR_API_KEY";
-        if (useFirebase) {
-            const app = initializeApp(firebaseConfig);
-            db = getDatabase(app);
-        }
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
 
         // ডিফল্ট ডেটা
         const defaultData = {
@@ -536,7 +530,7 @@
             ]
         };
 
-        let electionData = JSON.parse(localStorage.getItem("bhatgram_election_2026")) || defaultData;
+        let electionData = defaultData;
         let pieChartInstance = null;
         const ADMIN_PIN = "kawsar2668";
 
@@ -577,39 +571,29 @@
 
         // লাইভ ভিউ কাউন্টার (সেশন লক ছাড়া)
         function trackPageViews() {
-            if (useFirebase) {
-                const viewsRef = ref(db, 'bhatgram2026_views');
-                runTransaction(viewsRef, (currentViews) => (currentViews || 0) + 1);
-                
-                onValue(viewsRef, (snapshot) => {
-                    const count = snapshot.val() || 1;
-                    document.getElementById("totalViews").innerText = toBanglaNumber(count);
-                });
-            } else {
-                let localViews = Number(localStorage.getItem("bhatgram_local_views")) || 0;
-                localViews++;
-                localStorage.setItem("bhatgram_local_views", localViews);
-                document.getElementById("totalViews").innerText = toBanglaNumber(localViews);
-            }
+            const viewsRef = ref(db, 'bhatgram2026_views');
+            runTransaction(viewsRef, (currentViews) => (currentViews || 0) + 1);
+            
+            onValue(viewsRef, (snapshot) => {
+                const count = snapshot.val() || 1;
+                document.getElementById("totalViews").innerText = toBanglaNumber(count);
+            });
         }
 
         function initApp() {
             startCountdown();
             trackPageViews();
-            if (useFirebase) {
-                const electionRef = ref(db, 'bhatgram2026');
-                onValue(electionRef, (snapshot) => {
-                    const data = snapshot.val();
-                    if (data) {
-                        electionData = data;
-                        renderAll();
-                    } else {
-                        set(electionRef, electionData);
-                    }
-                });
-            } else {
-                renderAll();
-            }
+
+            const electionRef = ref(db, 'bhatgram2026');
+            onValue(electionRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    electionData = data;
+                    renderAll();
+                } else {
+                    set(electionRef, defaultData);
+                }
+            });
         }
 
         function renderAll() {
@@ -777,12 +761,7 @@
         }
 
         function persistData() {
-            localStorage.setItem("bhatgram_election_2026", JSON.stringify(electionData));
-            if (useFirebase) {
-                set(ref(db, 'bhatgram2026'), electionData);
-            } else {
-                renderAll();
-            }
+            set(ref(db, 'bhatgram2026'), electionData);
         }
 
         initApp();
